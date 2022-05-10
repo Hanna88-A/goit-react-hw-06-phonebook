@@ -1,23 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import PropTypes from 'prop-types';
 import s from './ContactForm.module.css';
+import { useDispatch, useSelector } from 'react-redux';
+import contactsAction from '../../redux/contacts/contacts-action';
 
-const useLocalStorage = (key, defaultValue) => {
-  const [state, setState] = useState(() => {
-    return JSON.parse(window.localStorage.getItem(key)) ?? defaultValue;
-  });
-  useEffect(() => {
-    window.localStorage.setItem(key, JSON.stringify(state))
-  }, [key, state]);
-  return [state, setState];
-};
 
-export default function ContactForm({onSubmit}) {
-    const [name, setName] = useLocalStorage('name','');
-    const [number, setNumber] = useLocalStorage('number','');
+const ContactForm = () => {
+    const [name, setName] = useState('');
+    const [number, setNumber] = useState('');
+    const contacts = useSelector(state => state.contacts.items);
+    const dispatch = useDispatch()
     
     const onHandleChange = (event) => {
-        // setName(event.target.value);
+      
         const { name, value } = event.target;
         switch (name) {
             case 'name':
@@ -32,8 +27,12 @@ export default function ContactForm({onSubmit}) {
     };
 
     const onHandleSubmit = event => {
+          if (contacts.find(contact => contact.name === name)) {
+        alert(`${name} is already in contacts`);
+        return
+        }
         event.preventDefault();
-        onSubmit(name, number);
+        dispatch(contactsAction.addContact(name, number))
         reset();
     };
 
@@ -43,7 +42,9 @@ export default function ContactForm({onSubmit}) {
     };
 
     return (
-        <form className={s.form} onSubmit={onHandleSubmit}>
+        <form className={s.form}
+            onSubmit={onHandleSubmit}
+        >
             <label className={s.name}> 
                 Name
                 <input
@@ -75,9 +76,12 @@ export default function ContactForm({onSubmit}) {
     )
 };
 
+export default ContactForm;
+
 ContactForm.propTypes = {
     name: PropTypes.string,
-    number: PropTypes.number
+    number: PropTypes.number,
+    contacts: PropTypes.array
 };
 
 
